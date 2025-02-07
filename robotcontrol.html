@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<style>
+    * {margin:0; padding: 0; box-sizing:border-box;}
+    #cp {border: 3px solid red; width:100vw; height: 100vh;}
+    #st {border: 3px solid green; width: 10vw; height:10vw; border-radius:10vw; position: fixed;}
+    #st.drag{ border: 5px solid orange; }
+    #i {position: fixed; top:0; padding:5px;}
+</style>
+</head>
+<body>
+    <div id="cp">
+        <div id="st">
+        </div>
+    </div>
+    <div id="i"></div>
+</body>
+<script>
+
+    let x=0;
+    let y=0;
+
+    function getsizes(){
+        let ret={};
+        let body = document.body, html = document.documentElement;
+        ret["fh"] = Math.max(body.scrollHeight, body.offsetHeight, 
+                          html.clientHeight, html.scrollHeight, html.offsetHeight );
+                          
+        ret["fw"] = Math.max(body.scrollWidth, body.offsetWidth, 
+                          html.clientWidth, html.scrollWidth, html.offsetWidth );
+                           
+        ret["st"]=document.getElementById("st");
+        let str=st.getBoundingClientRect();
+        ret["sth"]=str.height;
+        ret["stw"]=str.width;
+        return ret;
+    }
+
+    function spos(s,x,y){
+
+        let ly=((s.fh/2)-(s.sth/2)-(y*(s.fh/2)/100));
+        let lx=((s.fw/2)-(s.stw/2)+(x*(s.fw/2)/100));
+
+        s.st.style.top=ly+"px";
+        s.st.style.left=lx+"px";
+    }
+    
+    function sh(){
+        ie.innerText="X: "+x+" Y: "+y;
+        spos(s,x,y);
+    }
+  
+    let ie=document.getElementById("i");
+    
+    let s=getsizes();
+
+    sh();
+        
+    window.addEventListener("resize",function(){ s=getsizes(); sh(); });
+
+    let adf=function(e){
+        s.st.classList.add("drag");
+    };
+    s.st.onmousedown = adf;
+    s.st.ontouchstart = adf;
+    
+    let mf=function(e){
+    
+        if (e.touches!==undefined && e.touches[0] !== undefined) { e["pageX"]=e.touches[0].pageX; e["pageY"]=e.touches[0].pageY; }
+        
+        if (s.st.classList.contains("drag")) {
+                        
+            y=Math.round(( ( (s.fh/2)-e.pageY )/(s.fh/2) )*100);
+            x=Math.round(( ( (s.fw/2)-e.pageX )/(s.fw/2) )*-100);
+         
+            sh();
+        }    
+    };
+
+    document.body.onmousemove = mf;
+    document.body.ontouchmove = mf;
+
+    let rdf=function(e){
+        s.st.classList.remove("drag");
+       
+        x=0;
+        y=0;
+        sh();
+    };
+
+    s.st.onmouseup = rdf;
+    s.st.ontouchend = rdf;
+    
+    let cm = 0;
+    let key = {};
+    
+    function kl(e,o=1) {
+        if (event.keyCode !== undefined) {
+            if (o) {adf(); cm=1;}
+            switch (event.keyCode) {
+            case 37:
+               key["left"]=o;
+            break;
+            case 38:
+               key["up"]=o;
+            break;
+            case 39:
+               key["right"]=o;
+            break;
+            case 40:
+               key["down"]=o;
+            break;
+            }
+            
+        }
+    }
+    
+    window.addEventListener("keydown",function(e){
+        kl(e,1);
+    });
+    
+    window.addEventListener("keyup",function(e){
+        kl(e,0);
+    });
+    
+    
+    setInterval(function(){
+        if (cm) {
+            if (key["left"]==1) x-=10;
+            if (key["right"]==1) x+=10;
+            if (key["up"]==1) y+=10;
+            if (key["down"]==1) y-=10;
+            
+            if (x>100) x=100;
+            if (x<-100) x=-100;
+            if (y>100) y=100;
+            if (y<-100) y=-100;
+            sh();
+            
+            if (x!=0) x=(x>0)?(x-1):(x+1);
+            if (y!=0) y=(y>0)?(y-1):(y+1);
+           
+            if (x==0 && y==0) {cm=0; rdf(); };
+        }
+    }, 10);
+   
+</script>
+</html>
