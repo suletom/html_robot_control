@@ -3,8 +3,9 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <style>
+    body {overflow: hidden;}
     * {margin:0; padding: 0; box-sizing:border-box; overscroll-behavior: none;}
-    #cp {border: 3px solid red; width:100vw; height: 100vh;}
+    #cp {border: 3px solid red; width:100dvw; height: 100dvh; overflow: auto;}
     #st {border: 3px solid green; width: 10vw; height:10vw; border-radius:10vw; position: fixed;}
     #st.drag{ border: 5px solid orange; }
     #i {position: fixed; top:0; padding:5px;}
@@ -51,6 +52,13 @@
         ie.innerText="X: "+x+" Y: "+y;
         spos(s,x,y);
     }
+    
+    function limitc(){
+        if (x>100) x=100;
+        if (x<-100) x=-100;
+        if (y>100) y=100;
+        if (y<-100) y=-100;
+    }
   
     let ie=document.getElementById("i");
     
@@ -74,7 +82,7 @@
                         
             y=Math.round(( ( (s.fh/2)-e.pageY )/(s.fh/2) )*100);
             x=Math.round(( ( (s.fw/2)-e.pageX )/(s.fw/2) )*-100);
-         
+            limitc();
             sh();
         }    
     };
@@ -133,10 +141,7 @@
             if (key["up"]==1) y+=10;
             if (key["down"]==1) y-=10;
             
-            if (x>100) x=100;
-            if (x<-100) x=-100;
-            if (y>100) y=100;
-            if (y<-100) y=-100;
+            limitc();
             sh();
             
             if (x!=0) x=(x>0)?(x-1):(x+1);
