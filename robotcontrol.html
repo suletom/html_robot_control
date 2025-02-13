@@ -5,17 +5,26 @@
 <style>
     body {overflow: hidden;}
     * {margin:0; padding: 0; box-sizing:border-box; overscroll-behavior: none;}
-    #cp {border: 3px solid red; width:100dvw; height: 100dvh; overflow: auto;}
-    #st {border: 3px solid green; width: 10vw; height:10vw; border-radius:10vw; position: fixed;}
-    #st.drag{ border: 5px solid orange; }
+    #cp {border: 3px solid red; width: 400px; height: 400px; overflow: visible; }
+    #st {border: 3px solid green; width: 10vw; height:10vw; border-radius:10vw; position: fixed; }
+    #st.drag{ border: 5px solid orange; position: fixed;}
     #i {position: fixed; top:0; padding:5px;}
+    #rc {
+        width: 100dvw;
+        height: 100dvh;
+        display: flex;
+        justify-content: right;
+        align-items: center;
+    }
 </style>
 </head>
 <body>
-    <div id="cp">
-        <div id="st">
+    <div id="rc">
+        <div id="cp">
+            <div id="st">
+            </div>
         </div>
-    </div>
+    </div>    
     <div id="i"></div>
 </body>
 <script>
@@ -24,26 +33,39 @@
     let y=0;
 
     function getsizes(){
+    
         let ret={};
         let body = document.body, html = document.documentElement;
-        ret["fh"] = Math.max(body.scrollHeight, body.offsetHeight, 
+        let rc = document.getElementById("cp");
+        let rcr = rc.getBoundingClientRect(); 
+        
+        ret["total_height"] = Math.max(body.scrollHeight, body.offsetHeight, 
                           html.clientHeight, html.scrollHeight, html.offsetHeight );
                           
-        ret["fw"] = Math.max(body.scrollWidth, body.offsetWidth, 
+        ret["total_width"] = Math.max(body.scrollWidth, body.offsetWidth, 
                           html.clientWidth, html.scrollWidth, html.offsetWidth );
-                           
+        
+        ret["controlpane_height"]=rcr.height;
+        ret["controlpane_width"]=rcr.width;
+        
         ret["st"]=document.getElementById("st");
         let str=st.getBoundingClientRect();
-        ret["sth"]=str.height;
-        ret["stw"]=str.width;
+        ret["handle_height"]=str.height;
+        ret["handle_width"]=str.width;
+                
+        ret["center_y"]=rcr.top+(ret.controlpane_height/2);
+        ret["center_x"]=rcr.left+(ret.controlpane_width/2);
+        
+        console.log(ret);
+                
         return ret;
     }
 
     function spos(s,x,y){
 
-        let ly=((s.fh/2)-(s.sth/2)-(y*(s.fh/2)/100));
-        let lx=((s.fw/2)-(s.stw/2)+(x*(s.fw/2)/100));
-
+        let ly=((s.center_y)-(s.handle_height/2)-(y*(s.controlpane_height/2)/100));
+        let lx=((s.center_x)-(s.handle_width/2)+(x*(s.controlpane_width/2)/100));
+             
         s.st.style.top=ly+"px";
         s.st.style.left=lx+"px";
     }
@@ -80,8 +102,8 @@
         
         if (s.st.classList.contains("drag")) {
                         
-            y=Math.round(( ( (s.fh/2)-e.pageY )/(s.fh/2) )*100);
-            x=Math.round(( ( (s.fw/2)-e.pageX )/(s.fw/2) )*-100);
+            y=Math.round(( ( (s.center_y)-e.pageY )/(s.controlpane_height/2) )*100);
+            x=Math.round(( ( (s.center_x)-e.pageX )/(s.controlpane_width/2) )*-100);
             limitc();
             sh();
         }    
@@ -153,3 +175,4 @@
    
 </script>
 </html>
+
