@@ -13,9 +13,10 @@
         width: 100dvw;
         height: 100dvh;
         display: flex;
-        justify-content: right;
+        justify-content: center;
         align-items: center;
     }
+    #s { display:none; position:fixed; top:30px; }
 </style>
 </head>
 <body>
@@ -24,14 +25,39 @@
             <div id="st">
             </div>
         </div>
-    </div>    
-    <div id="i"></div>
+    </div>
+
+    <div id="i"><a onclick="document.getElementById('s').style.display==''?document.getElementById('s').style.display='block':document.getElementById('s').style.display='';">OPTIONS</a> <span id="is"></span></div>
+    <div id="s">
+    <form>
+        <div><label>Turn pivot limit(0-100)</label><input type="text" name="pivlim" id="pivlim" placeholder="35" /></div>
+        <div><label>Cursor move delay(ms)</label><input type="text" name="acri" id="acri" placeholder="10" /></div>
+        <div><label>Controlpane size(px)</label><input type="text" name="cps" id="cps" placeholder="400" onchange="ss();" /></div>
+    </form>
+    </div>
 </body>
 <script>
 
     let x=0;
     let y=0;
-
+    
+    function ss(){
+        document.getElementById("cp").style.width=getintp("cps")+"px";
+        document.getElementById("cp").style.height=getintp("cps")+"px";
+        s=getsizes();
+        sh();
+    }
+    
+    function getintp(id){
+    
+       let e = document.getElementById(id);
+       let iv = e.value;
+       if (iv.match(/^[0-9]+$/)){
+          return parseInt(iv);
+       }
+       return e.placeholder;
+    }
+    
     function getsizes(){
     
         let ret={};
@@ -70,8 +96,44 @@
         s.st.style.left=lx+"px";
     }
     
+    
+    function tankcontrol(x,y){
+    
+        let r=0;  //right drive -100(back) - 100(foward)
+        let l=0;  //left drive -100(back) - 100(foward)
+        
+        //can be fine tuned -> turn behavior at side
+        let pivylimit = getintp("pivlim"); 
+
+        let ltmp;
+        let rtmp;
+        let pivspeed;
+        let pivscale; 
+            
+        if (y >= 0) {
+            //forward
+            ltmp = (x >= 0 ? 100 : 100 + x);
+            rtmp = (x >= 0 ? 100 - x : 100);
+        } else {
+            //back
+            ltmp = (x >= 0 ? 100 - x : 100);
+            rtmp = (x >= 0 ? 100 : 100 + x);
+        }
+    
+        ltmp = ltmp * y / 100;
+        rtmp = rtmp * y / 100;
+    
+        pivspeed = x;
+        pivscale = (Math.abs(y) > pivylimit) ? 0.0 : (1.0 - Math.abs(y) / pivylimit);
+    
+        r = (1.0 - pivscale) * ltmp + pivscale * (pivspeed);
+        l = (1.0 - pivscale) * rtmp + pivscale * (-pivspeed);
+
+        return "R: "+Math.round(r)+" L: "+Math.round(l);
+    }
+    
     function sh(){
-        ie.innerText="X: "+x+" Y: "+y;
+        ie.innerHTML="X: "+x+" Y: "+y+" | "+tankcontrol(x,y);
         spos(s,x,y);
     }
     
@@ -82,13 +144,18 @@
         if (y<-100) y=-100;
     }
   
-    let ie=document.getElementById("i");
+    let ie=document.getElementById("is");
     
     let s=getsizes();
 
     sh();
         
     window.addEventListener("resize",function(){ s=getsizes(); sh(); });
+    window.addEventListener("click",function(e){ s.st.classList.remove("drag");
+        x=0;
+        y=0;
+        sh();
+    });
 
     let adf=function(e){
         s.st.classList.add("drag");
@@ -156,7 +223,7 @@
     });
     
     
-    setInterval(function(){
+    function cursorhandler(){
         if (cm) {
             if (key["left"]==1) x-=10;
             if (key["right"]==1) x+=10;
@@ -171,8 +238,12 @@
            
             if (x==0 && y==0) {cm=0; rdf(); };
         }
-    }, 10);
+        
+        setTimeout(function(){ cursorhandler(); }, getintp("acri"));
+        
+    }
+    
+    setTimeout(function(){ cursorhandler(); }, getintp("acri"));
    
 </script>
 </html>
-
