@@ -31,15 +31,86 @@
     <div id="s">
     <form>
         <div><label>Turn pivot limit(0-100)</label><input type="text" name="pivlim" id="pivlim" placeholder="35" /></div>
-        <div><label>Cursor move delay(ms)</label><input type="text" name="acri" id="acri" placeholder="10" /></div>
+        <div><label>Cursor move delay(ms)</label><input type="text" name="acri" id="acri" placeholder="5" /></div>
         <div><label>Controlpane size(px)</label><input type="text" name="cps" id="cps" placeholder="400" onchange="ss();" /></div>
     </form>
     </div>
+
+    <p style="position:fixed; top:0; right:0;"><img id="cam" style="width:300px;height:300px;transform:rotate(270deg);" /><br/>
+    <span id="db"></span>
+    <button style=background-color:yellow;height:40px onmousedown=getsend('ledon')><b> LED ON </b></button>
+    <button style=background-color:yellow;height:40px onmousedown=getsend('ledoff')><b> LED OFF </b></button>
+    </p>
+    
 </body>
 <script>
 
     let x=0;
     let y=0;
+    
+    var run=1;
+
+var stack=[];
+  
+var lastr=0;
+var lastl=0;
+
+document.getElementById("cam").src=window.location.protocol+"//"+window.location.host + ":81/stream";
+document.getElementById("db").innerText=window.location.protocol+"//"+window.location.host + ":81/stream";
+
+var xp = new XMLHttpRequest();
+function getsend(arg) { xp.open('GET', arg +'?' + new Date().getTime(), true); xp.send() }
+  
+function ajf() {
+    
+    if (run==0) {
+       return;
+    }
+   
+    var u=window.location.href;
+    
+    u+=(u.substr(u.length-1)=="/"?"fctrl":"/fctrl");
+
+    if (stack.length>0) {
+      var l=stack[stack.length-1].l;
+      var r=stack[stack.length-1].r;
+     
+      if (r==lastr && l==lastl) return;
+      
+      u+="?l="+l+"&r="+r;
+      
+      stack=[];
+      stack.push({'r': r,'l': l});
+      
+    }else{
+        return;
+    }
+
+    run=0;
+    var x=new XMLHttpRequest(); 
+    x.timeout = 3000; 
+        
+    x.open('GET',u,true);
+    x.onload =  function() {
+      
+      if (x.status===200) {
+
+         lastr=r;
+         lastl=l;
+         document.getElementById("db").innerText=x.responseText;
+       
+      }
+      run=1;
+    }        
+    x.ontimeout=function(e) {
+      run=1;
+    }
+    x.send(null);
+};
+
+setInterval(function(){
+      ajf();
+},50);  
     
     function ss(){
         document.getElementById("cp").style.width=getintp("cps")+"px";
@@ -81,9 +152,7 @@
                 
         ret["center_y"]=rcr.top+(ret.controlpane_height/2);
         ret["center_x"]=rcr.left+(ret.controlpane_width/2);
-        
-        console.log(ret);
-                
+                                
         return ret;
     }
 
@@ -116,8 +185,8 @@
             rtmp = (x >= 0 ? 100 - x : 100);
         } else {
             //back
-            ltmp = (x >= 0 ? 100 - x : 100);
-            rtmp = (x >= 0 ? 100 : 100 + x);
+            rtmp = (x >= 0 ? 100 - x : 100);
+            ltmp = (x >= 0 ? 100 : 100 + x);
         }
     
         ltmp = ltmp * y / 100;
@@ -128,6 +197,8 @@
     
         r = (1.0 - pivscale) * ltmp + pivscale * (pivspeed);
         l = (1.0 - pivscale) * rtmp + pivscale * (-pivspeed);
+        
+        stack.push({'r': Math.round(r), 'l': Math.round(l)});
 
         return "R: "+Math.round(r)+" L: "+Math.round(l);
     }
